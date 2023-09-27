@@ -3,8 +3,7 @@ from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
 
-with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
+
 
 router = APIRouter()
 
@@ -16,7 +15,8 @@ def get_catalog():
     """
 
     # Can return a max of 20 items.
-
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
     return [
             {
                 "sku": "RED_POTION_0",
