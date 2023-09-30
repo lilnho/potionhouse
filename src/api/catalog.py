@@ -19,14 +19,14 @@ def get_catalog():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
     
-    row = fetchone(result)    
+    col = result.fetchone
         
     return [
             {
                 "sku": "RED_POTION_0",
                 "name": "red potion",
                 #"quantity": 1,
-                "quantity": row[0],
+                "quantity": col[0],
                 "price": 50,
                 "potion_type": [100, 0, 0, 0],
             }
