@@ -26,6 +26,25 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     """ """
     print(barrels_delivered)
 
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, gold FROM global_inventory"))
+    
+    row = result.fetchone()
+    num_red_ml = row[0]
+    gold = row[1]
+    
+    for i in barrels_delivered:
+        if i.sku == "SMALL_RED_BARREL":
+            price = i.price
+            quantity = i.quantity
+            ml_in_barrel = i.ml_per_barrel
+
+    red_ml = (quantity * ml_in_barrel) + num_red_ml
+    gold -= (price * quantity)
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_ml = :red_ml, gold = :gold"), {"red_ml": red_ml, "gold": gold})
+
     return "OK"
 
 # Gets called once a day
@@ -33,31 +52,35 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
 
+    #print(wholesale_catalog)
+
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold FROM global_inventory"))
 
     row = result.fetchone()
     num_red_pots = row[0]
-    num_red_ml = row[1]
-    gold = row[2]
+    gold = row[1]
+    price = 0
+    quantity = 0
     
-    purchase_plan = []
-    if num_red_pots < 10:
-        purchase_plan.append(
-        {
-            "sku": "SMALL_RED_BARREL",
-            "quantity": 1,
-        })
-
-
-    print(wholesale_catalog)
+    for i in wholesale_catalog:
+        if i.sku == "SMALL_RED_BARREL":
+            price = i.price
+            quantity = i.quantity
     
-    return purchase_plan
-'''
+    print(price)
+    
+    num_bought = 0
+    
+    #buys barrels if have less than 10 pots and have more gold than the price of barrel
+    if (num_red_pots < 10) & (gold > price) & (quantity > 0):
+        num_bought += 1
+        #gold -= price
+
+    
     return [
         {
             "sku": "SMALL_RED_BARREL",
-            "quantity": 1,
+            "quantity": num_bought,
         }
     ]
-'''

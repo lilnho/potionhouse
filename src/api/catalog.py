@@ -20,13 +20,13 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
     
     row = result.fetchone()
-            
+    quantity = row[1]
     
     return [
             {
                 "sku": "RED_POTION_0",
                 "name": "red potion",
-                "quantity": row[1],
+                "quantity": quantity,
                 "price": 50,
                 "potion_type": [100, 0, 0, 0],
             }

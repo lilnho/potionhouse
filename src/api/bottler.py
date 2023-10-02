@@ -21,6 +21,27 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
     print(potions_delivered)
+    
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_red_ml FROM global_inventory"))
+
+    row = result.fetchone()
+    num_red_pots = row[0]
+    num_red_ml = row[1]
+
+    quantity = 0
+
+    for i in potions_delivered:
+        if i.potion_type == [100, 0, 0, 0]:
+            quantity = i.quantity
+
+    #subtract red ml for each potion made
+    num_red_ml -= quantity * 100
+    num_red_pots += quantity
+    
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_red_ml = :red_ml"), {"red_pots": num_red_pots, "red_ml": num_red_ml})
+
 
     return "OK"
 
@@ -49,8 +70,6 @@ def get_bottle_plan():
         num_red_ml -= 100
         num_red_pots += 1
 
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_red_ml = :red_ml"), {"red_pots": num_red_pots, "red_ml": num_red_ml})
 
     return [
             {
