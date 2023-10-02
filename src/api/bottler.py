@@ -4,12 +4,9 @@ from pydantic import BaseModel
 from src.api import auth
 
 import sqlalchemy
-import src
+
 from src import database as db
-'''
-with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
-'''
+
 router = APIRouter(
     prefix="/bottler",
     tags=["bottler"],
@@ -40,9 +37,24 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into red potions.
 
+    
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_red_ml FROM global_inventory"))
+
+    row = result.fetchone()
+    num_red_pots = row[0]
+    num_red_ml = row[1]
+    
+    while num_red_ml >= 100:
+        num_red_ml -= 100
+        num_red_pots += 1
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_red_ml = :red_ml"), {"red_pots": num_red_pots, "red_ml": num_red_ml})
+
     return [
             {
                 "potion_type": [100, 0, 0, 0],
-                "quantity": 5,
+                "quantity": num_red_pots,
             }
         ]

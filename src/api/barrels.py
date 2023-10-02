@@ -3,13 +3,9 @@ from pydantic import BaseModel
 from src.api import auth
 
 import sqlalchemy
-import src
 
 from src import database as db
-'''
-with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(sql_to_execute))
-'''
+
 router = APIRouter(
     prefix="/barrels",
     tags=["barrels"],
@@ -36,11 +32,32 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
-    print(wholesale_catalog)
 
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+
+    row = result.fetchone()
+    num_red_pots = row[0]
+    num_red_ml = row[1]
+    gold = row[2]
+    
+    purchase_plan = []
+    if num_red_pots < 10:
+        purchase_plan.append(
+        {
+            "sku": "SMALL_RED_BARREL",
+            "quantity": 1,
+        })
+
+
+    print(wholesale_catalog)
+    
+    return purchase_plan
+'''
     return [
         {
             "sku": "SMALL_RED_BARREL",
             "quantity": 1,
         }
     ]
+'''
