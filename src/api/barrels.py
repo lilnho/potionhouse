@@ -73,7 +73,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     num_bought = 0
     
     #buys barrels if have less than 10 pots and have more gold than the price of barrel
-    if (num_red_pots < 10) & (gold > price) & (quantity > 0):
+    if (num_red_pots < 10) and (gold > price) and (quantity > 0):
         num_bought += 1
         #gold -= price
 
