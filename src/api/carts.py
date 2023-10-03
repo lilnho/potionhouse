@@ -80,9 +80,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     gold = row[1]
     
     gold_gained = 0
-    
-    
-    #pots_bought = carts[cart_id][0][1]
     pots_bought = 0
     
     for i in carts[cart_id]:
@@ -97,8 +94,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, gold = :gold"), {"red_pots": num_red_pots, "gold": gold})
 
-    
-    
+    #reset cart
     carts.pop(cart_id)
 
     return {"total_potions_bought": pots_bought, "total_gold_paid": gold_gained}
