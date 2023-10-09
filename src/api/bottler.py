@@ -49,7 +49,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     
     for i in potions_delivered:
         #check red pots
-        if i.potion_type == [100, 0, 0, 0]:
+        if (i.potion_type == [100, 0, 0, 0]):
             num_red_ml -= (i.quantity * 100)
             num_red_pots += i.quantity
         #check green pots
@@ -90,28 +90,21 @@ def get_bottle_plan():
 
     
     with db.engine.begin() as connection:
-        red_result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_red_ml FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml FROM global_inventory"))
 
-    with db.engine.begin() as connection:
-        green_result = connection.execute(sqlalchemy.text("SELECT num_green_potions, num_green_ml FROM global_inventory"))
-
-    with db.engine.begin() as connection:
-        blue_result = connection.execute(sqlalchemy.text("SELECT num_blue_potions, num_blue_ml FROM global_inventory"))
 
     #red potion data
-    red = red_result.fetchone()
-    num_red_pots = red[0]
-    num_red_ml = red[1]
+    row = result.fetchone()
+    num_red_pots = 0
+    num_red_ml = row[0]
     
     #green potion data
-    green = green_result.fetchone()
-    num_green_pots = green[0]
-    num_green_ml = green[1]
+    num_green_pots = 0
+    num_green_ml = row[1]
 
     #blue potion data
-    blue = blue_result.fetchone()
-    num_blue_pots = blue[0]
-    num_blue_ml = blue[1]
+    num_blue_pots = 0
+    num_blue_ml = row[2]
     
     #calculate red potions to be made
     while num_red_ml >= 100:
