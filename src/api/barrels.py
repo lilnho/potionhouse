@@ -36,13 +36,13 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     gold = row[3]
     
     for i in barrels_delivered:
-        if i.sku == "SMALL_RED_BARREL":
+        if (i.sku == "SMALL_RED_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
             num_red_ml += (i.quantity * i.ml_per_barrel)
-        elif i.sku == "SMALL_GREEN_BARREL":
+        elif (i.sku == "SMALL_GREEN_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
             num_green_ml += (i.quantity * i.ml_per_barrel)
-        elif i.sku == "SMALL_BLUE_BARREL":
+        elif i.sku == ("SMALL_BLUE_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
             num_blue_ml += (i.quantity * i.ml_per_barrel)
 
@@ -79,6 +79,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     "sku": i.sku,
                     "quantity": num_bought,
                 })
+                gold -= i.price
                 num_bought = 0
         elif i.sku == "SMALL_GREEN_BARREL":
             if (num_green_pots < 10) and (gold > i.price) and (i.quantity > 0):
@@ -87,6 +88,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     "sku": i.sku,
                     "quantity": num_bought,
                 })
+                gold -= i.price
                 num_bought = 0
         elif i.sku == "SMALL_BLUE_BARREL":
             if (num_blue_pots < 10) and (gold > i.price) and (i.quantity > 0):
@@ -95,6 +97,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     "sku": i.sku,
                     "quantity": num_bought,
                 })
+                gold -= i.price
                 num_bought = 0
     
     return plan
