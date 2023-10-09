@@ -67,6 +67,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if i.sku == "SMALL_RED_BARREL":
             price = i.price
             quantity = i.quantity
+
     
     print(price)
     
@@ -83,4 +84,5 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             "sku": "SMALL_RED_BARREL",
             "quantity": num_bought,
         }
+        
     ]
