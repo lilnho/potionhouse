@@ -49,21 +49,12 @@ def get_catalog():
     if blue_pots > 0:
         catalog.append(
                 {
-                    "sku": "GREEN_POTION_0",
-                    "name": "green potion",
-                    "quantity": green_pots,
-                    "price": 50,
-                    "potion_type": [0, 100, 0, 0],
-                }
-        )
-    if green_pots > 0:
-        catalog.append(
-                {
                     "sku": "BLUE_POTION_0",
                     "name": "blue potion",
-                    "quantity": green_pots,
+                    "quantity": blue_pots,
                     "price": 50,
                     "potion_type": [0, 0, 100, 0],
                 }
         )
+
     return catalog
