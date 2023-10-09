@@ -72,27 +72,41 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     global carts
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory"))
 
     row = result.fetchone()
     
     num_red_pots = row[0]
-    gold = row[1]
+    num_green_pots = row[1]
+    num_blue_pots = row[2]
+    gold = row[3]
     
     gold_gained = 0
     pots_bought = 0
     
     for i in carts[cart_id]:
-        while i[1] > 0 and num_red_pots > 0:
-            pots_bought += 1
-            gold_gained += 50
-            num_red_pots -= 1
-            i[1] -= 1
+        if i[0] == "RED_POTION_0":
+            while i[1] > 0 and num_red_pots > 0:
+                pots_bought += 1
+                gold_gained += 50
+                num_red_pots -= 1
+                i[1] -= 1
+        elif i[0] == "GREEN_POTION_0":
+            while i[1] > 0 and num_green_pots > 0:
+                pots_bought += 1
+                gold_gained += 50
+                num_green_pots -= 1
+                i[1] -= 1
+        elif i[0] == "BLUE_POTION_0":
+            while i[1] > 0 and num_blue_pots > 0:
+                pots_bought += 1
+                gold_gained += 50
+                num_blue_pots -= 1
     
     gold += gold_gained
     
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, gold = :gold"), {"red_pots": num_red_pots, "gold": gold})
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_green_potions = :green_pots, num_blue_potions = :blue_pots, gold = :gold"), {"red_pots": num_red_pots, "green_pots": num_green_pots, "blue_pots": num_blue_pots, "gold": gold})
 
     #reset cart
     carts.pop(cart_id)
