@@ -94,13 +94,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         elif i[0] == "GREEN_POTION_0":
             while i[1] > 0 and num_green_pots > 0:
                 pots_bought += 1
-                gold_gained += 50
+                gold_gained += 20
                 num_green_pots -= 1
                 i[1] -= 1
         elif i[0] == "BLUE_POTION_0":
             while i[1] > 0 and num_blue_pots > 0:
                 pots_bought += 1
-                gold_gained += 50
+                gold_gained += 20
                 num_blue_pots -= 1
     
     gold += gold_gained
