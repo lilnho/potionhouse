@@ -37,6 +37,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     
     print("Inventory before barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
     
+    '''
     for i in barrels_delivered:
         if (i.sku == "SMALL_RED_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
@@ -47,7 +48,19 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         elif i.sku == ("SMALL_BLUE_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
             num_blue_ml += (i.quantity * i.ml_per_barrel)
-
+    '''
+    
+    for i in barrels_delivered:
+        if (i.sku == "SMALL_RED_BARREL") and (gold >= i.price)  and (i.quantity > 0):
+             gold -= i.price
+             num_red_ml += i.ml_per_barrel
+        elif (i.sku == "SMALL_GREEN_BARREL") and (gold >= i.price)  and (i.quantity > 0):
+             gold -= i.price
+             num_green_ml += i.ml_per_barrel
+        elif (i.sku == "SMALL_BLUE_BARREL") and (gold >= i.price)  and (i.quantity > 0):
+             gold -= i.price
+             num_blue_ml += i.ml_per_barrel  
+                       
     print("Inventory after barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
 
     with db.engine.begin() as connection:
@@ -75,12 +88,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
     
     num_bought = 0
+    total_bought = 0
     
     print("Potion Inventory before barrel purchase plan: red pots = {}, green pots = {}, blue pots = {}, gold = {}".format(num_red_pots, num_green_pots, num_blue_pots, gold))
     
     for i in wholesale_catalog:
         if i.sku == "SMALL_RED_BARREL":
-            if (num_red_pots < 10) and (gold > i.price) and (i.quantity > 0):
+            if (num_red_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
                     "sku": i.sku,
@@ -88,8 +102,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 })
                 gold -= i.price
                 num_bought = 0
+                total_bought += 1
         elif i.sku == "SMALL_GREEN_BARREL":
-            if (num_green_pots < 10) and (gold > i.price) and (i.quantity > 0):
+            if (num_green_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
                     "sku": i.sku,
@@ -97,8 +112,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 })
                 gold -= i.price
                 num_bought = 0
+                total_bought += 1
         elif i.sku == "SMALL_BLUE_BARREL":
-            if (num_blue_pots < 10) and (gold > i.price) and (i.quantity > 0):
+            if (num_blue_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
                     "sku": i.sku,
@@ -106,8 +122,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 })
                 gold -= i.price
                 num_bought = 0
+                total_bought += 1
     
-    print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(num_bought, gold))
+    print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(total_bought, gold))
     print("Purchase plan: ")
     print(plan)
     
