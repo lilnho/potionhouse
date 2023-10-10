@@ -20,10 +20,13 @@ def get_inventory():
         ml_result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, gold FROM global_inventory"))
     with db.engine.begin() as connection:
         pot_result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions FROM global_inventory"))
-       
-    num_pots =  pot_result[0] + pot_result[1] + pot_result[2]
-    num_ml = ml_result[0] + ml_result[1] + ml_result[2]
-    gold = ml_result[3]
+    
+    pot_row = pot_result.fetchone() 
+    ml_row = ml_result.fetchone()  
+    
+    num_pots =  pot_row[0] + pot_row[1] + pot_row[2]
+    num_ml = ml_row[0] + ml_row[1] + ml_row[2]
+    gold = ml_row[3]
 
     return {"number_of_potions": num_pots, "ml_in_barrels": num_ml, "gold": gold}
 
