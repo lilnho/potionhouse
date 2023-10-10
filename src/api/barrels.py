@@ -35,6 +35,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     num_blue_ml = row[2]
     gold = row[3]
     
+    print("Inventory before barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
+    
     for i in barrels_delivered:
         if (i.sku == "SMALL_RED_BARREL") and (gold > (i.price * i.quantity)):
             gold -= (i.price * i.quantity)
@@ -46,6 +48,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             gold -= (i.price * i.quantity)
             num_blue_ml += (i.quantity * i.ml_per_barrel)
 
+    print("Inventory after barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
+
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_ml = :red_ml, num_green_ml = :green_ml, num_blue_ml = :blue_ml, gold = :gold"), {"red_ml": num_red_ml, "green_ml": num_green_ml, "blue_ml": num_blue_ml, "gold": gold})
 
@@ -56,7 +60,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
 
-    #print(wholesale_catalog)
+    print("catalog in barrel purchase plan: ")
+    print(wholesale_catalog)
 
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory"))
@@ -70,6 +75,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     plan = []
     
     num_bought = 0
+    
+    print("Potion Inventory before barrel purchase plan: red pots = {}, green pots = {}, blue pots = {}, gold = {}".format(num_red_pots, num_green_pots, num_blue_pots, gold))
     
     for i in wholesale_catalog:
         if i.sku == "SMALL_RED_BARREL":
@@ -99,5 +106,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 })
                 gold -= i.price
                 num_bought = 0
+    
+    print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(num_bought, gold))
+    print("Purchase plan: ")
+    print(plan)
+    
     
     return plan
