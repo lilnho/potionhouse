@@ -47,14 +47,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     num_blue_ml = blue[1]
 
     
-    print("Red pots before bottle: " + num_red_pots)
-    print("Red ml before bottle: " + num_red_ml)
+    print("Red pots before bottle: ", num_red_pots)
+    print("Red ml before bottle: ", num_red_ml)
     
-    print("Green pots before bottle: " + num_green_pots)
-    print("Green ml before bottle: " + num_green_ml)
+    print("Green pots before bottle: ", num_green_pots)
+    print("Green ml before bottle: ", num_green_ml)
     
-    print("Blue pots before bottle: " + num_blue_pots)
-    print("Blue ml before bottle: " + num_blue_ml)
+    print("Blue pots before bottle: ", num_blue_pots)
+    print("Blue ml before bottle: ", num_blue_ml)
     
     for i in potions_delivered:
         #check red pots
@@ -70,14 +70,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             num_blue_ml -= (i.quantity * 100)
             num_blue_pots += i.quantity
     
-    print("Red pots after bottle: " + num_red_pots)
-    print("Red ml after bottle: " + num_red_ml)
+    print("Red pots after bottle: ", num_red_pots)
+    print("Red ml after bottle: ", num_red_ml)
     
-    print("Green pots after bottle: " + num_green_pots)
-    print("Green ml after bottle: " + num_green_ml)
+    print("Green pots after bottle: ", num_green_pots)
+    print("Green ml after bottle: ", num_green_ml)
     
-    print("Blue pots after bottle: " + num_blue_pots)
-    print("Blue ml after bottle: " + num_blue_ml)    
+    print("Blue pots after bottle: ", num_blue_pots)
+    print("Blue ml after bottle: ", num_blue_ml)    
     
     #update red data
     with db.engine.begin() as connection:
