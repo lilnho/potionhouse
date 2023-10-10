@@ -106,6 +106,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 pots_bought += 1
                 gold_gained += 20
                 num_blue_pots -= 1
+                i[1] -= 1
                 print("Blue Potion bought")
     
     gold += gold_gained
