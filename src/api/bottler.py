@@ -47,19 +47,37 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     num_blue_ml = blue[1]
 
     
+    print("Red pots before bottle: " + num_red_pots)
+    print("Red ml before bottle: " + num_red_ml)
+    
+    print("Green pots before bottle: " + num_green_pots)
+    print("Green ml before bottle: " + num_green_ml)
+    
+    print("Blue pots before bottle: " + num_blue_pots)
+    print("Blue ml before bottle: " + num_blue_ml)
+    
     for i in potions_delivered:
         #check red pots
         if (i.potion_type == [100, 0, 0, 0]):
             num_red_ml -= (i.quantity * 100)
             num_red_pots += i.quantity
         #check green pots
-        if i.potion_type == [0, 100, 0, 0]:
+        elif i.potion_type == [0, 100, 0, 0]:
             num_green_ml -= (i.quantity * 100)
             num_green_pots += i.quantity
         #check blue pots
-        if i.potion_type == [0, 0, 100, 0]:
+        elif i.potion_type == [0, 0, 100, 0]:
             num_blue_ml -= (i.quantity * 100)
             num_blue_pots += i.quantity
+    
+    print("Red pots after bottle: " + num_red_pots)
+    print("Red ml after bottle: " + num_red_ml)
+    
+    print("Green pots after bottle: " + num_green_pots)
+    print("Green ml after bottle: " + num_green_ml)
+    
+    print("Blue pots after bottle: " + num_blue_pots)
+    print("Blue ml after bottle: " + num_blue_ml)    
     
     #update red data
     with db.engine.begin() as connection:
@@ -125,24 +143,24 @@ def get_bottle_plan():
     
     if num_red_pots > 0:
         bottles.append(
-                {
-                    "potion_type": [100, 0, 0, 0],
-                    "quantity": num_red_pots,
-                }
+            {
+                "potion_type": [100, 0, 0, 0],
+                "quantity": num_red_pots,
+            }
         )
     if num_green_pots > 0:
         bottles.append(
-                {
-                    "potion_type": [0, 100, 0, 0],
-                    "quantity": num_green_pots,
-                }
+            {
+                "potion_type": [0, 100, 0, 0],
+                "quantity": num_green_pots,
+            }
         )
     if num_blue_pots > 0:
         bottles.append(
-                {
-                    "potion_type": [0, 0, 100, 0],
-                    "quantity": num_blue_pots,
-                }
+            {
+                "potion_type": [0, 0, 100, 0],
+                "quantity": num_blue_pots,
+            }
         )
 
     return bottles
