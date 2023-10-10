@@ -84,7 +84,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     gold_gained = 0
     pots_bought = 0
     
-    print("Total gold before checkout is: " + gold)
+    print("Total gold before checkout is: ", gold)
     
     for i in carts[cart_id]:
         if i[0] == "RED_POTION_0":
@@ -110,9 +110,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     
     gold += gold_gained
     
-    print("Number of potions customer bought is: " + pots_bought)
-    print("Gold gained from checkout is: " + gold_gained)
-    print("Total gold after checkout is: " + gold)
+    print("Number of potions customer bought is: ", pots_bought)
+    print("Gold gained from checkout is: ", gold_gained)
+    print("Total gold after checkout is: ", gold)
     
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_green_potions = :green_pots, num_blue_potions = :blue_pots, gold = :gold"), {"red_pots": num_red_pots, "green_pots": num_green_pots, "blue_pots": num_blue_pots, "gold": gold})
