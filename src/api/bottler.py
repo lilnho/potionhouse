@@ -90,7 +90,43 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #update blue data
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = :blue_pots, num_blue_ml = :blue_ml"), {"blue_pots": num_blue_pots, "blue_ml": num_blue_ml})
+    
+    """
+    with db.engine.begin() as connection:
+        additional_pots = sum(potion.quantity for potion in potions_delivered)
+        red_ml = sum(potion.quantity * potion.potion_type[0] for potion in potions_delivered)
+        green_ml = sum(potion.quantity * potion.potion_type[1] for potion in potions_delivered)
+        blue_ml = sum(potion.quantity * potion.potion_type[2] for potion in potions_delivered)
+        dark_ml = sum(potion.quantity * potion.potion_type[3] for potion in potions_delivered)
 
+        for pot in potions_delivered:
+            connection.execute(sqlalchemy.text(
+             ""
+             UPDATE potions
+             SET inventory = inventory * :additional_pots
+             WHERE type = :potion_type
+             ""   
+            ), 
+            [{
+            "additional_pots": pot.quantity,
+            "potion_type": pot.potion_type
+            }]
+            )
+        
+        connection.execute(
+            sqlalchemy.text(
+                ""
+                UPDATE globals SET
+                num_red_ml = num_red_ml - :red_ml,
+                num_green_ml = num_green_ml - :green_ml,
+                num_blue_ml = num_blue_ml - :blue_ml,
+                num_dark_ml = num_dark_ml - :dark_ml
+                ""
+            ),
+            [{"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml}]
+        )
+        """
+        
     return "OK"
 
 # Gets called 4 times a day
