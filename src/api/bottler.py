@@ -21,49 +21,6 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
     print(potions_delivered)
-    """    
-    num_red_ml = 0
-    num_green_ml = 0
-    num_blue_ml = 0
-    
-    num_red_pots = 0
-    num_green_pots = 0
-    num_blue_pots = 0
-    
-    for pot in potions_delivered:
-        #check red pots
-        if (pot.potion_type == [100, 0, 0, 0]):
-            num_red_ml += (pot.quantity * 100)
-            num_red_pots += pot.quantity
-        #check green pots
-        elif pot.potion_type == [0, 100, 0, 0]:
-            num_green_ml += (pot.quantity * 100)
-            num_green_pots += pot.quantity
-        #check blue pots
-        elif pot.potion_type == [0, 0, 100, 0]:
-            num_blue_ml += (pot.quantity * 100)
-            num_blue_pots += pot.quantity  
-    
-    #update data
-    with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                ""
-                UPDATE global_inventory 
-                SET num_red_potions = num_red_potions + :red_pots, num_red_ml = num_red_ml - :red_ml, 
-                num_green_potions = num_green_potions + :green_pots, num_green_ml = num_green_ml - :green_ml, 
-                num_blue_potions = num_blue_potions + :blue_pots, num_blue_ml = num_blue_ml - :blue_ml
-                ""
-                ), 
-                [{
-                    "red_pots": num_red_pots, 
-                    "red_ml": num_red_ml,
-                    "green_pots": num_green_pots,
-                    "green_ml": num_green_ml,
-                    "blue_pots": num_blue_pots,
-                    "blue_ml": num_blue_ml
-                }])
-    """
     
     with db.engine.begin() as connection:
         additional_pots = sum(potion.quantity for potion in potions_delivered)
@@ -77,7 +34,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
              """
              UPDATE potions
              SET inventory = inventory + :additional_pots
-             WHERE type = :potion_type
+             WHERE potion_type = :potion_type
              """  
             ), 
             [{
@@ -119,73 +76,65 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"))
 
+        potions = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT potion_type
+                FROM potions
+                """
+            ))
 
-    #red potion data
+    #potion data
     row = result.fetchone()
-    num_red_pots = 0
-    num_red_ml = row[0]
-    
-    #green potion data
-    num_green_pots = 0
-    num_green_ml = row[1]
+    combos = potions.fetchall()
 
-    #blue potion data
-    num_blue_pots = 0
-    num_blue_ml = row[2]
-    
-    #dark potion data
-    num_dark_pots = 0
-    num_dark_ml = row[3]
-    
-    #calculate red potions to be made
-    while num_red_ml >= 100:
-        num_red_ml -= 100
-        num_red_pots += 1
+    print(combos)
 
-    #calculate green potions to be made
-    while num_green_ml >= 100:
-        num_green_ml -= 100
-        num_green_pots += 1    
-
-    #calculate blue potions to be made
-    while num_blue_ml >= 100:
-        num_blue_ml -= 100
-        num_blue_pots += 1
-        
-    while num_dark_ml >= 100:
-        num_dark_ml -= 100
-        num_dark_pots += 1
+    red_ml = row[0]
+    green_ml = row[1]
+    blue_ml = row[2]
+    dark_ml = row[3]
         
     bottles = []
+   
+    print("red ml: ", red_ml)
+    print("green ml: ", green_ml)
+    print("blue ml: ", blue_ml)
+    print("dark ml: ", dark_ml)
+
     
-    if num_red_pots > 0:
-        bottles.append(
-            {
-                "potion_type": [100, 0, 0, 0],
-                "quantity": num_red_pots,
-            }
-        )
-    if num_green_pots > 0:
-        bottles.append(
-            {
-                "potion_type": [0, 100, 0, 0],
-                "quantity": num_green_pots,
-            }
-        )
-    if num_blue_pots > 0:
-        bottles.append(
-            {
-                "potion_type": [0, 0, 100, 0],
-                "quantity": num_blue_pots,
-            }
-        )
-    if num_dark_pots > 0:
-        bottles.append(
-            {
-                "potion_type": [0, 0, 0, 100],
-                "quantity": num_blue_pots,
-            }
-        )
-
-
+    #while there are still at least 100 mls of a potion left
+    #may need to add more/different conditions for the other combos
+    while (red_ml >= 100) or (green_ml >= 100) or (blue_ml >= 100) or (dark_ml >= 100):
+        #loop through every potion type combo
+        for p in combos:
+            pot_type = p[0]
+            print(pot_type)
+            
+            #check that there is enough ml for the potion type
+            if (red_ml >= pot_type[0]) and (green_ml >= pot_type[1]) and (blue_ml >= pot_type[2]) and (dark_ml >= pot_type[3]):
+                #check if the potion has already been put into the list
+                if any(pot["potion_type"] == pot_type for pot in bottles):
+                    for pot in bottles:
+                        if pot["potion_type"] == pot_type:
+                            pot["quantity"] += 1
+                            break
+                else:
+                    bottles.append(
+                        {
+                            "potion_type": pot_type,
+                            "quantity": 1,
+                        }
+                    )
+                red_ml -= pot_type[0]
+                green_ml -= pot_type[1]
+                blue_ml -= pot_type[2]
+                dark_ml -= pot_type[3]
+                
+    print("red ml after: ", red_ml)
+    print("green ml after: ", green_ml)
+    print("blue ml after: ", blue_ml)
+    print("dark ml after: ", dark_ml)
+    
+                    
     return bottles
