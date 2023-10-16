@@ -25,35 +25,6 @@ class Barrel(BaseModel):
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     """ """
     print(barrels_delivered)
-
-    """    
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, gold FROM global_inventory"))
-    
-    row = result.fetchone()
-    num_red_ml = row[0]
-    num_green_ml = row[1]
-    num_blue_ml = row[2]
-    gold = row[3]
-    
-    print("Inventory before barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
-    
-    for i in barrels_delivered:
-        if (i.potion_type == [1, 0, 0, 0]) and (gold >= i.price)  and (i.quantity > 0):
-             gold -= i.price
-             num_red_ml += i.ml_per_barrel
-        elif (i.potion_type == [0, 1, 0, 0]) and (gold >= i.price)  and (i.quantity > 0):
-             gold -= i.price
-             num_green_ml += i.ml_per_barrel
-        elif (i.potion_type == [0, 0, 1,]) and (gold >= i.price)  and (i.quantity > 0):
-             gold -= i.price
-             num_blue_ml += i.ml_per_barrel  
-                       
-    print("Inventory after barrel delivery: red ml = {}, green ml = {}, blue ml = {}, gold = {}".format(num_red_ml, num_green_ml, num_blue_ml, gold))
-
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_ml = :red_ml, num_green_ml = :green_ml, num_blue_ml = :blue_ml, gold = :gold"), {"red_ml": num_red_ml, "green_ml": num_green_ml, "blue_ml": num_blue_ml, "gold": gold})
-    """
     
     gold_paid = 0
     red_ml = 0
@@ -72,7 +43,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         elif barrels.potion_type == [0, 0, 0, 1]:
             dark_ml += barrels.ml_per_barrel * barrels.quantity
         else:
-            raise Exception("Invalid potion type")        
+            raise Exception("Invalid potion type")
 
     print(f"gold paid: {gold_paid}, red ml: {red_ml}, green ml: {green_ml}, blue ml: {blue_ml}, dark ml: {dark_ml}")
     
@@ -100,13 +71,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, num_dark_potions, gold FROM global_inventory"))
 
     row = result.fetchone()
     num_red_pots = row[0]
     num_green_pots = row[1]
     num_blue_pots = row[2]
-    gold = row[3]
+    num_dark_pots = row[3]
+    gold = row[4]
     
     plan = []
     
@@ -115,15 +87,17 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     print("Potion Inventory before barrel purchase plan: red pots = {}, green pots = {}, blue pots = {}, gold = {}".format(num_red_pots, num_green_pots, num_blue_pots, gold))
     
-    if (num_red_pots < num_green_pots) and (num_red_pots < num_blue_pots):
+    if (num_red_pots <= num_green_pots) and (num_red_pots <= num_blue_pots) and (num_red_pots <= num_dark_pots):
         least_pots = "red"
-    elif (num_green_pots < num_red_pots) and (num_green_pots < num_blue_pots):
+    elif (num_green_pots <= num_red_pots) and (num_green_pots <= num_blue_pots) and (num_green_pots <= num_dark_pots):
         least_pots = "green"
-    else:
+    elif (num_blue_pots <= num_red_pots) and (num_blue_pots <= num_green_pots) and (num_blue_pots <= num_dark_pots):
         least_pots = "blue"
+    else:
+        least_pots = "dark"
     
     for i in wholesale_catalog:
-        if (i.potion_type == [1, 0, 0, 0]) and (i.sku == least_pots):
+        if (i.potion_type == [1, 0, 0, 0]) and (least_pots == "red"):
             if (num_red_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
@@ -133,7 +107,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 gold -= i.price
                 num_bought = 0
                 total_bought += 1
-        elif (i.potion_type == [0, 1, 0, 0]) and (i.sku == least_pots):
+        elif (i.potion_type == [0, 1, 0, 0]) and (least_pots == "green"):
             if (num_green_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
@@ -143,8 +117,18 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 gold -= i.price
                 num_bought = 0
                 total_bought += 1
-        elif (i.potion_type == [0, 0, 1, 0]) and (i.sku == least_pots):
+        elif (i.potion_type == [0, 0, 1, 0]) and (least_pots == "blue"):
             if (num_blue_pots < 10) and (gold >= i.price) and (i.quantity > 0):
+                num_bought += 1
+                plan.append({
+                    "sku": i.sku,
+                    "quantity": num_bought,
+                })
+                gold -= i.price
+                num_bought = 0
+                total_bought += 1
+        elif (i.potion_type == [0, 0, 0, 1]) and (least_pots == "dark"):
+            if (num_dark_pots < 10) and (gold >= i.price) and (i.quantity > 0):
                 num_bought += 1
                 plan.append({
                     "sku": i.sku,
