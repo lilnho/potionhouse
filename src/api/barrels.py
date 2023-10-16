@@ -71,72 +71,58 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, num_dark_potions, gold FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
 
     row = result.fetchone()
-    num_red_pots = row[0]
-    num_green_pots = row[1]
-    num_blue_pots = row[2]
-    num_dark_pots = row[3]
-    gold = row[4]
+    gold = row[0]
     
     plan = []
     
-    num_bought = 0
     total_bought = 0
     
-    print("Potion Inventory before barrel purchase plan: red pots = {}, green pots = {}, blue pots = {}, gold = {}".format(num_red_pots, num_green_pots, num_blue_pots, gold))
-    
-    if (num_red_pots <= num_green_pots) and (num_red_pots <= num_blue_pots) and (num_red_pots <= num_dark_pots):
-        least_pots = "red"
-    elif (num_green_pots <= num_red_pots) and (num_green_pots <= num_blue_pots) and (num_green_pots <= num_dark_pots):
-        least_pots = "green"
-    elif (num_blue_pots <= num_red_pots) and (num_blue_pots <= num_green_pots) and (num_blue_pots <= num_dark_pots):
-        least_pots = "blue"
-    else:
-        least_pots = "dark"
+    red_bought = 0
+    green_bought = 0
+    blue_bought = 0
+    dark_bought = 0
     
     for i in wholesale_catalog:
-        if (i.potion_type == [1, 0, 0, 0]) and (least_pots == "red"):
-            if (num_red_pots < 10) and (gold >= i.price) and (i.quantity > 0):
-                num_bought += 1
+        if (i.potion_type == [1, 0, 0, 0]) and (red_bought == 0):
+            #add condition of if gold > price + 50 or however much the largest barrels are maybe
+            if (gold >= i.price) and (i.quantity > 0):
                 plan.append({
                     "sku": i.sku,
-                    "quantity": num_bought,
+                    "quantity": 1,
                 })
                 gold -= i.price
-                num_bought = 0
                 total_bought += 1
-        elif (i.potion_type == [0, 1, 0, 0]) and (least_pots == "green"):
-            if (num_green_pots < 10) and (gold >= i.price) and (i.quantity > 0):
-                num_bought += 1
+                red_bought += 1
+        elif (i.potion_type == [0, 1, 0, 0]) and (green_bought == 0):
+            if (gold >= i.price) and (i.quantity > 0):
                 plan.append({
                     "sku": i.sku,
-                    "quantity": num_bought,
+                    "quantity": 1,
                 })
                 gold -= i.price
-                num_bought = 0
                 total_bought += 1
-        elif (i.potion_type == [0, 0, 1, 0]) and (least_pots == "blue"):
-            if (num_blue_pots < 10) and (gold >= i.price) and (i.quantity > 0):
-                num_bought += 1
+                green_bought += 1
+        elif (i.potion_type == [0, 0, 1, 0]) and (blue_bought == 0):
+            if (gold >= i.price) and (i.quantity > 0):
                 plan.append({
                     "sku": i.sku,
-                    "quantity": num_bought,
+                    "quantity": 1,
                 })
                 gold -= i.price
-                num_bought = 0
                 total_bought += 1
-        elif (i.potion_type == [0, 0, 0, 1]) and (least_pots == "dark"):
-            if (num_dark_pots < 10) and (gold >= i.price) and (i.quantity > 0):
-                num_bought += 1
+                blue_bought += 1
+        elif (i.potion_type == [0, 0, 0, 1]) and (dark_bought == 0):
+            if (gold >= i.price) and (i.quantity > 0):
                 plan.append({
                     "sku": i.sku,
-                    "quantity": num_bought,
+                    "quantity": 1,
                 })
                 gold -= i.price
-                num_bought = 0
                 total_bought += 1
+                dark_bought += 1
     
     print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(total_bought, gold))
     print("Purchase plan: ")
