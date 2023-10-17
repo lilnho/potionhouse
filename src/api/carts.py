@@ -93,7 +93,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
         
         gold_res = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
-        
+        gold_before = gold_res.scalar_one()
         potion_rows = connection.execute(
             sqlalchemy.text(
                 """
@@ -105,7 +105,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 ).fetchall()
         potion_total = sum(potion[0] for potion in potion_rows)
         
-        gold_before = gold_res.scalar_one()
+
         connection.execute(
             sqlalchemy.text(
                 """
@@ -133,6 +133,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 """
                 ), 
             [{"cart_id": cart_id}])
+        
+        gold_total = gold_total_res.scalar_one()
+
+        gold_gained = gold_total - gold_before
+        
         connection.execute(sqlalchemy.text(
             """
             DELETE FROM cart_items
@@ -141,8 +146,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             ),
             [{"carts_id": cart_id}]
             )    
-    gold_total = gold_total_res.scalar_one()
 
-    gold_gained = gold_total - gold_before
 
     return {"total_potions_bought": potion_total, "total_gold_paid": gold_gained}

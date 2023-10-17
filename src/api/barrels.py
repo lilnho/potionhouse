@@ -97,6 +97,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 gold -= i.price
                 total_bought += 1
                 red_bought += 1
+                
         elif (i.potion_type == [0, 1, 0, 0]) and (green_bought == 0):
             if (gold >= i.price) and (i.quantity > 0):
                 plan.append({
@@ -128,6 +129,5 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(total_bought, gold))
     print("Purchase plan: ")
     print(plan)
-    
     
     return plan
