@@ -24,18 +24,38 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    global carts
-    
-    cart_id = len(carts) + 1
-    carts[cart_id] = []
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO carts
+                (customer)
+                VALUES 
+                (:customer)
+                RETURNING id
+                """
+                ),
+            {"customer": new_cart.customer}
+            )
+    cart_id = result.scalar()
     return {"cart_id": cart_id}
-
-
+    
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     """ """
 
-    cart = carts[cart_id]
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT * 
+                FROM carts 
+                WHERE id = (:cart_id)
+                """
+            ),
+            {"cart_id": cart_id}
+            )
+    cart = result[0]
     return cart
     #return {}
 
@@ -48,16 +68,17 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
-    global carts
-
-    quantity = cart_item.quantity
-    
-    for i in carts[cart_id]:
-        if item_sku == i[0]:
-            i[1] = quantity
-            return "OK"
-    
-    carts[cart_id].append([item_sku, quantity])
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO cart_items (carts_id, potions_id, quantity)
+                SELECT :cart_id, potions.id, :quantity
+                FROM potions WHERE potions.sku = :item_sku
+                """
+            ), 
+            [{"cart_id": cart_id, "quantity": cart_item.quantity, "item_sku": item_sku}]
+            )
     
     return "OK"
 
@@ -68,57 +89,63 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-
-    global carts
+    
+    potion_total = 0
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory"))
+        
+        gold_res = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
+        
+        potion_rows = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT quantity 
+                FROM cart_items 
+                WHERE cart_items.carts_id = :carts_id
+                """),
+                [{"carts_id": cart_id}]
+                ).fetchall()
+        potion_total = sum(potion[0] for potion in potion_rows)
+        
+        gold_before = gold_res.scalar_one()
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE potions
+                SET inventory = potions.inventory - cart_items.quantity
+                FROM cart_items
+                WHERE potions.id = cart_items.potions_id and cart_items.carts_id = :cart_id
+                """
+                ), [{"cart_id": cart_id}]
+            )
+    
+        #add potion price * potion quantity to gold
+        gold_total_res = connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE global_inventory 
+                SET gold = global_inventory.gold + 
+                (
+                SELECT potions.price * cart_items.quantity
+                FROM potions 
+                JOIN cart_items ON potions.id = cart_items.potions_id 
+                WHERE cart_items.carts_id = :cart_id
+                LIMIT 1
+                )
+                RETURNING gold
+                """
+                ), 
+            [{"cart_id": cart_id}])
+        connection.execute(sqlalchemy.text(
+            """
+            DELETE FROM cart_items
+            WHERE carts_id = :carts_id
+            """
+            ),
+            [{"carts_id": cart_id}]
+            )    
+    gold_total = gold_total_res.scalar_one()
 
-    row = result.fetchone()
-    
-    num_red_pots = row[0]
-    num_green_pots = row[1]
-    num_blue_pots = row[2]
-    gold = row[3]
-    
-    gold_gained = 0
-    pots_bought = 0
-    
-    print("Total gold before checkout is: ", gold)
-    
-    for i in carts[cart_id]:
-        if i[0] == "RED_POTION_0":
-            while i[1] > 0 and num_red_pots > 0:
-                pots_bought += 1
-                gold_gained += 50
-                num_red_pots -= 1
-                i[1] -= 1
-                print("Red Potion bought")
-        elif i[0] == "GREEN_POTION_0":
-            while i[1] > 0 and num_green_pots > 0:
-                pots_bought += 1
-                gold_gained += 20
-                num_green_pots -= 1
-                i[1] -= 1
-                print("Green Potion bought")
-        elif i[0] == "BLUE_POTION_0":
-            while i[1] > 0 and num_blue_pots > 0:
-                pots_bought += 1
-                gold_gained += 20
-                num_blue_pots -= 1
-                i[1] -= 1
-                print("Blue Potion bought")
-    
-    gold += gold_gained
-    
-    print("Number of potions customer bought is: ", pots_bought)
-    print("Gold gained from checkout is: ", gold_gained)
-    print("Total gold after checkout is: ", gold)
-    
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :red_pots, num_green_potions = :green_pots, num_blue_potions = :blue_pots, gold = :gold"), {"red_pots": num_red_pots, "green_pots": num_green_pots, "blue_pots": num_blue_pots, "gold": gold})
+    gold_gained = gold_total - gold_before
 
-    #reset cart
-    carts.pop(cart_id)
-
-    return {"total_potions_bought": pots_bought, "total_gold_paid": gold_gained}
+    return {"total_potions_bought": potion_total, "total_gold_paid": gold_gained}
