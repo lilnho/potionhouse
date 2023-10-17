@@ -54,10 +54,8 @@ def get_cart(cart_id: int):
                 """
             ),
             {"cart_id": cart_id}
-            )
-    cart = result[0]
-    return cart
-    #return {}
+            ).fetchone()
+    return {"id": result[0], "customer": result[1]}
 
 
 class CartItem(BaseModel):
@@ -126,11 +124,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 UPDATE global_inventory 
                 SET gold = global_inventory.gold + 
                 (
-                SELECT potions.price * cart_items.quantity
+                SELECT SUM(potions.price * cart_items.quantity)
                 FROM potions 
                 JOIN cart_items ON potions.id = cart_items.potions_id 
                 WHERE cart_items.carts_id = :cart_id
-                LIMIT 1
                 )
                 RETURNING gold
                 """
