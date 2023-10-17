@@ -10,13 +10,17 @@ create table
     constraint potions_id_key unique (id)
   ) tablespace pg_default;
 
-  create table
+create table
   public.global_inventory (
     num_red_ml integer null,
     gold integer not null,
     num_blue_ml integer null,
     num_green_ml integer null,
     num_dark_ml integer null,
+    num_red_potions integer null,
+    num_green_potions integer null,
+    num_blue_potions integer null,
+    num_dark_potions integer null,
     constraint global_inventory_pkey primary key (gold)
   ) tablespace pg_default;
 
