@@ -92,8 +92,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     with db.engine.begin() as connection:
         
-        gold_res = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
-        gold_before = gold_res.scalar_one()
+        gold_res = connection.execute(sqlalchemy.text("SELECT SUM(gold_transactions) FROM ledgers")).fetchone()
+        gold_before = gold_res[0]
         potion_rows = connection.execute(
             sqlalchemy.text(
                 """
@@ -105,38 +105,21 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 ).fetchall()
         potion_total = sum(potion[0] for potion in potion_rows)
         
-
+        
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE potions
-                SET inventory = potions.inventory - cart_items.quantity
-                FROM cart_items
-                WHERE potions.id = cart_items.potions_id and cart_items.carts_id = :cart_id
+                INSERT INTO ledgers (created_at, carts_id, potions_id, potion_transactions, gold_transactions)
+                SELECT now(), :cart_id, potions.id, (-1) * cart_items.quantity, potions.price * cart_items.quantity
+                FROM potions
+                JOIN cart_items ON potions.id = cart_items.potions_id
+                WHERE cart_items.carts_id = :cart_id
                 """
                 ), [{"cart_id": cart_id}]
             )
-    
-        #add potion price * potion quantity to gold
-        gold_total_res = connection.execute(
-            sqlalchemy.text(
-                """
-                UPDATE global_inventory 
-                SET gold = global_inventory.gold + 
-                (
-                SELECT SUM(potions.price * cart_items.quantity)
-                FROM potions 
-                JOIN cart_items ON potions.id = cart_items.potions_id 
-                WHERE cart_items.carts_id = :cart_id
-                )
-                RETURNING gold
-                """
-                ), 
-            [{"cart_id": cart_id}])
-        
-        gold_total = gold_total_res.scalar_one()
 
-        gold_gained = gold_total - gold_before
+        gold_after = connection.execute(sqlalchemy.text("SELECT SUM(gold_transactions) FROM ledgers")).fetchone()[0]
+        gold_gained = gold_after - gold_before
         
         connection.execute(sqlalchemy.text(
             """

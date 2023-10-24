@@ -48,18 +48,29 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     print(f"gold paid: {gold_paid}, red ml: {red_ml}, green ml: {green_ml}, blue ml: {blue_ml}, dark ml: {dark_ml}")
     
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(
-            """
-            UPDATE global_inventory SET 
-            num_red_ml = num_red_ml + :red_ml, 
-            num_green_ml = num_green_ml + :green_ml, 
-            num_blue_ml = num_blue_ml + :blue_ml, 
-            num_dark_ml = num_dark_ml + :dark_ml,
-            gold = gold - :gold
-            """
-            ), 
-        [{"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml, "gold": gold_paid}])
+        
+        barrels = [red_ml, green_ml, blue_ml, dark_ml]
+        ml_type = 1
+        for i in barrels:
+            if i > 0: 
+                connection.execute(sqlalchemy.text(
+                    """
+                    INSERT INTO ledgers (created_at, barrels_id, ml_transactions)
+                    VALUES (now(), :ml_type, :ml_transactions)
+                    """
+                    ), 
+                [{"ml_type": ml_type, "ml_transactions": i}])
+            ml_type += 1
 
+        connection.execute(
+            sqlalchemy.text(
+            """
+            INSERT INTO ledgers (created_at, gold_transactions)
+            VALUES (now(), :gold)
+            """
+        ),
+        [{"gold": (-1) * gold_paid}])
+        
 
     return "OK"
 
@@ -72,7 +83,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT SUM(gold_transactions) FROM ledgers"))
 
     row = result.fetchone()
     gold = row[0]
@@ -85,6 +96,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     green_bought = 0
     blue_bought = 0
     dark_bought = 0
+    
     
     for i in wholesale_catalog:
         if (i.potion_type == [1, 0, 0, 0]) and (red_bought == 0):
@@ -126,7 +138,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 total_bought += 1
                 dark_bought += 1
     
-    print("Potion Inventory after barrel purchase plan: potions bought {}, gold = {}".format(total_bought, gold))
+    print("Potion Inventory after barrel purchase plan: barrels bought {}, gold = {}".format(total_bought, gold))
     print("Purchase plan: ")
     print(plan)
     

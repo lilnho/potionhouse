@@ -31,11 +31,12 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 
         for pot in potions_delivered:
             connection.execute(sqlalchemy.text(
-             """
-             UPDATE potions
-             SET inventory = inventory + :additional_pots
-             WHERE potion_type = :potion_type
-             """  
+            """
+            INSERT INTO ledgers (created_at, potions_id, potion_transactions)
+            SELECT now(), potions.id, :additional_pots
+            FROM potions
+            WHERE potions.potion_type = :potion_type
+            """  
             ), 
             [{
             "additional_pots": pot.quantity,
@@ -43,18 +44,20 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             }]
             )
         
-        connection.execute(
-            sqlalchemy.text(
-                """
-                UPDATE global_inventory SET
-                num_red_ml = num_red_ml - :red_ml,
-                num_green_ml = num_green_ml - :green_ml,
-                num_blue_ml = num_blue_ml - :blue_ml,
-                num_dark_ml = num_dark_ml - :dark_ml
-                """
-            ),
-            [{"red_ml": red_ml, "green_ml": green_ml, "blue_ml": blue_ml, "dark_ml": dark_ml}]
-        )
+        pots = [red_ml, green_ml, blue_ml, dark_ml]
+        ml_type = 1
+        for i in pots:
+            if i > 0:
+                connection.execute(
+                    sqlalchemy.text(
+                    """
+                    INSERT INTO ledgers (created_at, barrels_id, ml_transactions)
+                    VALUES (now(), :ml_type, :ml_transactions)
+                    """
+                ),
+                [{"ml_type": ml_type, "ml_transactions": (-1) * i}]
+            )
+            ml_type += 1
         
         
     return "OK"
@@ -74,7 +77,14 @@ def get_bottle_plan():
 
     
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"))
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT barrels_id, SUM(ml_transactions) 
+                FROM ledgers
+                WHERE barrels_id IS NOT NULL
+                GROUP BY barrels_id
+                """))
 
         potions = connection.execute(
             sqlalchemy.text(
@@ -86,15 +96,19 @@ def get_bottle_plan():
             ))
 
     #potion data
-    row = result.fetchone()
+    rows = result.fetchall()
+    barrel_mls = [0, 0, 0, 0]
+    for barrel in rows:
+        barrel_mls[barrel[0]] += barrel[1]
+    
     combos = potions.fetchall()
 
     print(combos)
 
-    red_ml = row[0]
-    green_ml = row[1]
-    blue_ml = row[2]
-    dark_ml = row[3]
+    red_ml = barrel_mls[0]
+    green_ml = barrel_mls[1]
+    blue_ml = barrel_mls[2]
+    dark_ml = barrel_mls[3]
         
     bottles = []
    
