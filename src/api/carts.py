@@ -147,15 +147,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     
     potion_total = 0
-
+    gold_gained = 0
     with db.engine.begin() as connection:
-        
-        gold_res = connection.execute(sqlalchemy.text("SELECT SUM(gold_transactions) FROM ledgers")).fetchone()
-        gold_before = gold_res[0]
+    
         potion_rows = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT quantity 
+                SELECT quantity, potions_id 
                 FROM cart_items 
                 WHERE cart_items.carts_id = :carts_id
                 """),
@@ -163,6 +161,16 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 ).fetchall()
         potion_total = sum(potion[0] for potion in potion_rows)
         
+        for type_bought in potion_rows:
+            gold_per = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT price * :quantity
+                    FROM potions
+                    WHERE potions.id = :id
+                    """
+                    ), [{"quantity": type_bought[0], "id": type_bought[1]}]).scalar_one()
+            gold_gained += gold_per   
         
         connection.execute(
             sqlalchemy.text(
@@ -175,9 +183,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 """
                 ), [{"cart_id": cart_id}]
             )
-
-        gold_after = connection.execute(sqlalchemy.text("SELECT SUM(gold_transactions) FROM ledgers")).fetchone()[0]
-        gold_gained = gold_after - gold_before
         
         connection.execute(sqlalchemy.text(
             """
