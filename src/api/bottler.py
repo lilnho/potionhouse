@@ -45,7 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             )
         
         pots = [red_ml, green_ml, blue_ml, dark_ml]
-        ml_type = 1
+        ml_type = 0
         for i in pots:
             if i > 0:
                 connection.execute(
@@ -83,7 +83,8 @@ def get_bottle_plan():
                 SELECT barrels_id, SUM(ml_transactions) 
                 FROM ledgers
                 WHERE barrels_id IS NOT NULL
-                GROUP BY barrels_id
+                GROUP BY barrels_id 
+                ORDER BY barrels_id ASC
                 """))
 
         potions = connection.execute(
@@ -99,6 +100,7 @@ def get_bottle_plan():
     rows = result.fetchall()
     barrel_mls = [0, 0, 0, 0]
     for barrel in rows:
+        print("barrel is: ", barrel)
         barrel_mls[barrel[0]] += barrel[1]
     
     combos = potions.fetchall()
@@ -109,14 +111,8 @@ def get_bottle_plan():
     green_ml = barrel_mls[1]
     blue_ml = barrel_mls[2]
     dark_ml = barrel_mls[3]
-        
-    bottles = []
-   
-    print("red ml: ", red_ml)
-    print("green ml: ", green_ml)
-    print("blue ml: ", blue_ml)
-    print("dark ml: ", dark_ml)
 
+    bottles = []
     
     #while there are still at least 100 mls of a potion left
     #may need to add more/different conditions for the other combos
@@ -146,6 +142,11 @@ def get_bottle_plan():
                 blue_ml -= pot_type[2]
                 dark_ml -= pot_type[3]
                 
+            print("red ml: ", red_ml)
+            print("green ml: ", green_ml)
+            print("blue ml: ", blue_ml)
+            print("dark ml: ", dark_ml)
+    
     print("red ml after: ", red_ml)
     print("green ml after: ", green_ml)
     print("blue ml after: ", blue_ml)

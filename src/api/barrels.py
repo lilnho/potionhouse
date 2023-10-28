@@ -50,7 +50,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     with db.engine.begin() as connection:
         
         barrels = [red_ml, green_ml, blue_ml, dark_ml]
-        ml_type = 1
+        ml_type = 0
         for i in barrels:
             if i > 0: 
                 connection.execute(sqlalchemy.text(

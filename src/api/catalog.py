@@ -19,9 +19,10 @@ def get_catalog():
         result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT sku, name, inventory, price, potion_type
-                FROM potions
-                WHERE inventory > 0
+                SELECT potions.sku, potions.name, SUM(ledgers.potion_transactions), potions.price, potions.potion_type
+                FROM ledgers
+                JOIN potions on ledgers.potions_id = potions.id
+                GROUP BY potions.id
                 """
             )
             )
@@ -30,14 +31,15 @@ def get_catalog():
 
     pots = result.fetchall()
     for i in pots:
-        catalog.append(
-                {
-                    "sku": i[0],
-                    "name": i[1],
-                    "quantity": i[2],
-                    "price": i[3],
-                    "potion_type": i[4],
-                }
-        )
+        if i[2] > 0:
+            catalog.append(
+                    {
+                        "sku": i[0],
+                        "name": i[1],
+                        "quantity": i[2],
+                        "price": i[3],
+                        "potion_type": i[4],
+                    }
+            )
     
     return catalog
