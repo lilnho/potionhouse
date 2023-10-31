@@ -50,11 +50,12 @@ def search_orders(
         
     if search_page != "" and search_page != "0":
         offset = int(search_page)
-        prevPage = str(offset - 1)
+        prevPage = str(offset - 5)
     else:
         offset = 0
         prevPage = ""
 
+    limit = 5
      
     if sort_order == search_sort_order.desc:
         order_by = sqlalchemy.desc(order_by)
@@ -75,6 +76,7 @@ def search_orders(
         .join(db.carts, db.carts.c.id == db.ledgers.c.carts_id)
         .offset(offset)
         .order_by(order_by)
+        .limit(limit)
     )
     
     if customer_name != "":
@@ -100,7 +102,7 @@ def search_orders(
                 )
                 lines += 1
             else:
-                nextPage = str(offset + 1)
+                nextPage = str(offset + 5)
                 
     """
     Search for cart line items by customer name and/or potion sku.
