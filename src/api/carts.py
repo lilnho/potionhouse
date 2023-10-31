@@ -48,14 +48,14 @@ def search_orders(
     else:
         assert False
         
-    if search_page != "":
+    if search_page != "" and search_page != "0":
         offset = int(search_page)
         prevPage = str(offset - 1)
     else:
         offset = 0
         prevPage = ""
 
-        
+     
     if sort_order == search_sort_order.desc:
         order_by = sqlalchemy.desc(order_by)
     elif sort_order == search_sort_order.asc:
@@ -70,7 +70,8 @@ def search_orders(
             db.ledgers.c.potion_transactions,
             db.ledgers.c.created_at,
         )
-        .join(db.potions, db.ledgers, db.potions.c.id == db.ledgers.c.potions_id)
+        .join(db.potions, db.potions.c.id == db.ledgers.c.potions_id)
+        .join(db.ledgers, db.potions.c.id == db.ledgers.c.potions_id)
         .join(db.carts, db.carts.c.id == db.ledgers.c.carts_id)
         .offset(offset)
         .order_by(order_by)
