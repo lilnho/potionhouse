@@ -75,7 +75,7 @@ def search_orders(
             db.ledgers.c.created_at,
         )
         .join(db.potions, db.potions.c.id == db.ledgers.c.potions_id)
-        .join(db.ledgers, db.potions.c.id == db.ledgers.c.potions_id)
+        #.join(db.ledgers, db.potions.c.id == db.ledgers.c.potions_id)
         .join(db.carts, db.carts.c.id == db.ledgers.c.carts_id)
         .offset(offset)
         .order_by(order_by)
