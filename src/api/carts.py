@@ -65,8 +65,8 @@ def search_orders(
     stmt = (
         sqlalchemy.select(
             db.ledgers.c.id,
-            db.potions.sku,
-            db.carts.customer,
+            db.potions.c.sku,
+            db.carts.c.customer,
             db.ledgers.c.gold_transactions,
             db.ledgers.c.potion_transactions,
             db.ledgers.c.created_at,
