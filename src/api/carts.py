@@ -50,7 +50,10 @@ def search_orders(
         
     if search_page != "" and search_page != "0":
         offset = int(search_page)
-        prevPage = str(offset - 5)
+        if offset > 5:
+            prevPage = str(offset - 5)
+        else:
+            prevPage = 0
     else:
         offset = 0
         prevPage = ""
@@ -86,9 +89,14 @@ def search_orders(
     
 
     with db.engine.connect() as conn:
-        res = conn.execute(stmt)
+        res = conn.execute(stmt).fetchall()
         results = []
         lines = 0
+        if len(res) > 5:
+            nextPage = str(offset + 5)
+        else:
+            nextPage = str(offset + len(res))
+            
         for row in res:
             if lines < 5:
                 results.append(
@@ -101,8 +109,6 @@ def search_orders(
                 }
                 )
                 lines += 1
-            else:
-                nextPage = str(offset + 5)
                 
     """
     Search for cart line items by customer name and/or potion sku.
