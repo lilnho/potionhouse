@@ -35,6 +35,73 @@ def search_orders(
     sort_col: search_sort_options = search_sort_options.timestamp,
     sort_order: search_sort_order = search_sort_order.desc,
 ):
+    
+    
+    if sort_col is search_sort_options.customer_name:
+        order_by = db.carts.c.customer
+    elif sort_col is search_sort_options.item_sku:
+        order_by = db.potions.c.sku
+    elif sort_col is search_sort_options.line_item_total:
+        order_by = db.ledgers.c.gold_transactions
+    elif sort_col is search_sort_options.timestamp:
+        order_by = db.ledgers.c.created_at
+    else:
+        assert False
+        
+    if search_page != "":
+        offset = int(search_page)
+        prevPage = str(offset - 1)
+    else:
+        offset = 0
+        prevPage = ""
+
+        
+    if sort_order == search_sort_order.desc:
+        order_by = sqlalchemy.desc(order_by)
+    elif sort_order == search_sort_order.asc:
+        order_by = sqlalchemy.asc(order_by)
+    
+    stmt = (
+        sqlalchemy.select(
+            db.ledgers.c.id,
+            db.potions.sku,
+            db.carts.customer,
+            db.ledgers.c.gold_transactions,
+            db.ledgers.c.potion_transactions,
+            db.ledgers.c.created_at,
+        )
+        .join(db.potions, db.ledgers, db.potions.c.id == db.ledgers.c.potions_id)
+        .join(db.carts, db.carts.c.id == db.ledgers.c.carts_id)
+        .offset(offset)
+        .order_by(order_by)
+        .limit(5)
+    )
+    
+    if customer_name != "":
+        stmt = stmt.where(db.carts.c.customer.ilike(f"%{customer_name}%"))
+    if potion_sku != "":
+        stmt = stmt.where(db.potions.c.sku.ilike(f"%{potion_sku}%"))
+    
+
+    with db.engine.connect() as conn:
+        res = conn.execute(stmt)
+        results = []
+        lines = 0
+        for row in res:
+            if lines < 5:
+                results.append(
+                {
+                    "line_item_id": row.id,
+                    "item_sku": str(row.potion_transactions * (-1)) + " " + row.sku,
+                    "customer_name": row.customer,
+                    "line_item_total": row.gold_transactions,
+                    "timestamp": row.created_at,
+                }
+                )
+                lines += 1
+            else:
+                nextPage = str(offset + 1)
+                
     """
     Search for cart line items by customer name and/or potion sku.
 
@@ -61,17 +128,9 @@ def search_orders(
     """
 
     return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "previous": prevPage,
+        "next": nextPage,
+        "results": results,
     }
 
 

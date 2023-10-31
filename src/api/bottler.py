@@ -92,7 +92,6 @@ def get_bottle_plan():
                 """
                 SELECT potion_type
                 FROM potions
-                ORDER BY inventory ASC
                 """
             ))
 
