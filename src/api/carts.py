@@ -95,7 +95,8 @@ def search_orders(
         if len(res) > 5:
             nextPage = str(offset + 5)
         else:
-            nextPage = str(offset + len(res))
+            #nextPage = str(offset + len(res))
+            nextPage = ""
             
         for row in res:
             if lines < 5:
