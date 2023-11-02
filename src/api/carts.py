@@ -79,7 +79,7 @@ def search_orders(
         .join(db.carts, db.carts.c.id == db.ledgers.c.carts_id)
         .offset(offset)
         .order_by(order_by)
-        .limit(limit)
+        #.limit(limit)
     )
     
     if customer_name != "":
