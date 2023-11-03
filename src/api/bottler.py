@@ -77,6 +77,14 @@ def get_bottle_plan():
 
     
     with db.engine.begin() as connection:
+        total = connection.execute(
+            sqlalchemy.text(
+                """
+                SELECT SUM(potion_transactions)
+                FROM ledgers 
+                """
+            )
+        )
         result = connection.execute(
             sqlalchemy.text(
                 """
@@ -95,6 +103,7 @@ def get_bottle_plan():
                 """
             ))
 
+    total_pots = total.scalar()
     #potion data
     rows = result.fetchall()
     barrel_mls = [0, 0, 0, 0]
@@ -111,40 +120,43 @@ def get_bottle_plan():
     blue_ml = barrel_mls[2]
     dark_ml = barrel_mls[3]
 
-    bottles = []
-    
-    #while there are still at least 100 mls of a potion left
-    #may need to add more/different conditions for the other combos
-    while (red_ml >= 100) or (green_ml >= 100) or (blue_ml >= 100) or (dark_ml >= 100):
-        #loop through every potion type combo
-        for p in combos:
-            pot_type = p[0]
-            print(pot_type)
-            
-            #check that there is enough ml for the potion type
-            if (red_ml >= pot_type[0]) and (green_ml >= pot_type[1]) and (blue_ml >= pot_type[2]) and (dark_ml >= pot_type[3]):
-                #check if the potion has already been put into the list
-                if any(pot["potion_type"] == pot_type for pot in bottles):
-                    for pot in bottles:
-                        if pot["potion_type"] == pot_type:
-                            pot["quantity"] += 1
-                            break
-                else:
-                    bottles.append(
-                        {
-                            "potion_type": pot_type,
-                            "quantity": 1,
-                        }
-                    )
-                red_ml -= pot_type[0]
-                green_ml -= pot_type[1]
-                blue_ml -= pot_type[2]
-                dark_ml -= pot_type[3]
+    if total_pots <= 300:
+        bottles = []
+        
+        #while there are still at least 100 mls of a potion left
+        #may need to add more/different conditions for the other combos
+        while ((red_ml >= 100) or (green_ml >= 100) or (blue_ml >= 100) or (dark_ml >= 100)) and (total_pots <= 300):
+            #loop through every potion type combo
+            for p in combos:
+                pot_type = p[0]
+                print(pot_type)
                 
-            print("red ml: ", red_ml)
-            print("green ml: ", green_ml)
-            print("blue ml: ", blue_ml)
-            print("dark ml: ", dark_ml)
+                #check that there is enough ml for the potion type
+                if (red_ml >= pot_type[0]) and (green_ml >= pot_type[1]) and (blue_ml >= pot_type[2]) and (dark_ml >= pot_type[3]):
+                    #check if the potion has already been put into the list
+                    if any(pot["potion_type"] == pot_type for pot in bottles):
+                        for pot in bottles:
+                            if pot["potion_type"] == pot_type:
+                                pot["quantity"] += 1
+                                total_pots += 1
+                                break
+                    else:
+                        bottles.append(
+                            {
+                                "potion_type": pot_type,
+                                "quantity": 1,
+                            }
+                        )
+                        total_pots += 1
+                    red_ml -= pot_type[0]
+                    green_ml -= pot_type[1]
+                    blue_ml -= pot_type[2]
+                    dark_ml -= pot_type[3]
+                    
+                print("red ml: ", red_ml)
+                print("green ml: ", green_ml)
+                print("blue ml: ", blue_ml)
+                print("dark ml: ", dark_ml)
     
     print("red ml after: ", red_ml)
     print("green ml after: ", green_ml)
