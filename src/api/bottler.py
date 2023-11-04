@@ -153,10 +153,10 @@ def get_bottle_plan():
                     blue_ml -= pot_type[2]
                     dark_ml -= pot_type[3]
                     
-                print("red ml: ", red_ml)
+                """print("red ml: ", red_ml)
                 print("green ml: ", green_ml)
                 print("blue ml: ", blue_ml)
-                print("dark ml: ", dark_ml)
+                print("dark ml: ", dark_ml)"""
     
     print("red ml after: ", red_ml)
     print("green ml after: ", green_ml)
