@@ -120,8 +120,8 @@ def get_bottle_plan():
     blue_ml = barrel_mls[2]
     dark_ml = barrel_mls[3]
 
+    bottles = []
     if total_pots < 300:
-        bottles = []
         
         #while there are still at least 100 mls of a potion left
         #may need to add more/different conditions for the other combos
