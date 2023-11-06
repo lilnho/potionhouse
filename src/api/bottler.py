@@ -132,7 +132,7 @@ def get_bottle_plan():
                 print(pot_type)
                 
                 #check that there is enough ml for the potion type
-                if (red_ml >= pot_type[0]) and (green_ml >= pot_type[1]) and (blue_ml >= pot_type[2]) and (dark_ml >= pot_type[3]):
+                if ((red_ml >= pot_type[0]) and (green_ml >= pot_type[1]) and (blue_ml >= pot_type[2]) and (dark_ml >= pot_type[3])) and (total_pots < 300):
                     #check if the potion has already been put into the list
                     if any(pot["potion_type"] == pot_type for pot in bottles):
                         for pot in bottles:
