@@ -125,7 +125,7 @@ def get_bottle_plan():
         
         #while there are still at least 100 mls of a potion left
         #may need to add more/different conditions for the other combos
-        while ((red_ml >= 100) or (green_ml >= 100) or (blue_ml >= 100) or (dark_ml >= 100)) and (total_pots < 300):
+        while (((red_ml >= 100) or (green_ml >= 100) or (blue_ml >= 100) or (dark_ml >= 100))) and (total_pots < 300):
             #loop through every potion type combo
             for p in combos:
                 pot_type = p[0]
