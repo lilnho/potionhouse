@@ -30,8 +30,9 @@ def get_catalog():
 
 
     pots = result.fetchall()
+    max_items = 0
     for i in pots:
-        if i[2] > 0:
+        if i[2] > 0 and max_items < 6:
             catalog.append(
                     {
                         "sku": i[0],
@@ -41,5 +42,6 @@ def get_catalog():
                         "potion_type": i[4],
                     }
             )
+            max_items += 1
     
     return catalog
