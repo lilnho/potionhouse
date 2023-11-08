@@ -163,7 +163,7 @@ def create_cart(new_cart: NewCart):
                 ),
             {"customer": new_cart.customer}
             )
-    cart_id = result.scalar()
+    cart_id = result.scalar_one()
     return {"cart_id": cart_id}
     
 @router.get("/{cart_id}")
