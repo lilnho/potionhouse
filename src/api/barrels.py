@@ -89,7 +89,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     gold = row[0]
     
     plan = []
-    
+    """
     total_bought = 0
     
     red_bought = 0
@@ -141,5 +141,5 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print("Potion Inventory after barrel purchase plan: barrels bought {}, gold = {}".format(total_bought, gold))
     print("Purchase plan: ")
     print(plan)
-    
+    """
     return plan
